@@ -88,4 +88,21 @@
 		</trim>
 	</select>
 
+    <select id="listByAppName" resultMap="XxlJobGroup">
+		SELECT <include refid="Base_Column_List" />
+		FROM xxl_job_group AS t
+		WHERE t.app_name IN
+		<foreach collection="list" item="item" open="(" close=")" separator=" , ">
+			#{item}
+		</foreach>
+	</select>
+
+	<insert id="batchSave" parameterType="java.util.List">
+		INSERT INTO xxl_job_group ( `app_name`, `title`, `address_type`, `update_time`)
+		values
+		<foreach collection="list" item="item" separator=" , ">
+			( #{item.appname}, #{item.title}, #{item.addressType},  #{item.updateTime} )
+		</foreach>
+	</insert>
+
 </mapper>

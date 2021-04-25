@@ -65,6 +65,17 @@
 	            <div class="col-xs-1">
 	            	<button class="btn btn-block btn-success add" type="button">${I18n.jobinfo_field_add}</button>
 	            </div>
+
+                <div class="col-xs-3">
+                    <input type="text" readonly class="form-control" style="width: 100%" id="infoCSVInputText" placeholder="${I18n.system_please_choose}${I18n.system_import}${I18n.system_file}" >
+                    <input style="display:none;" type="file" name="infoCSVInput" id="infoCSVInput"/>
+                </div>
+                <div class="col-xs-1">
+                    <button class="btn btn-block btn-success" id="importBtn">${I18n.system_import}</button>
+                </div>
+                <div class="col-xs-1">
+                    <button class="btn btn-block btn-info" id="exportBtn">${I18n.system_export}</button>
+                </div>
           	</div>
 	    	
 			<div class="row">
@@ -77,6 +88,7 @@
 			              	<table id="job_list" class="table table-bordered table-striped" width="100%" >
 				                <thead>
 					            	<tr>
+					            		<th><div align="center"><input type="checkbox" name="infoCheckAll"></div></th>
 					            		<th name="id" >${I18n.jobinfo_field_id}</th>
 					                	<th name="jobGroup" >${I18n.jobinfo_field_jobgroup}</th>
 					                  	<th name="jobDesc" >${I18n.jobinfo_field_jobdesc}</th>

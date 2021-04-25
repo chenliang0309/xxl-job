@@ -2,9 +2,12 @@ package com.xxl.job.admin.service;
 
 
 import com.xxl.job.admin.core.model.XxlJobInfo;
+import com.xxl.job.admin.dto.XxlJobInfoDTO;
+import com.xxl.job.admin.dto.XxlJobInfoSyncDTO;
 import com.xxl.job.core.biz.model.ReturnT;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -83,4 +86,11 @@ public interface XxlJobService {
 	 */
 	public ReturnT<Map<String,Object>> chartInfo(Date startDate, Date endDate);
 
+	/**
+	 * sync jobs
+	 *
+	 * @param jobInfoDTOS
+	 * @return
+	 */
+    ReturnT<Integer> sync(XxlJobInfoSyncDTO xxlJobInfoSyncDTO);
 }

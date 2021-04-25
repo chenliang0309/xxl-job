@@ -1,5 +1,6 @@
 package com.xxl.job.admin.controller;
 
+import com.xxl.job.admin.controller.annotation.PermissionLimit;
 import com.xxl.job.admin.core.cron.CronExpression;
 import com.xxl.job.admin.core.exception.XxlJobException;
 import com.xxl.job.admin.core.model.XxlJobGroup;
@@ -13,6 +14,8 @@ import com.xxl.job.admin.core.thread.JobTriggerPoolHelper;
 import com.xxl.job.admin.core.trigger.TriggerTypeEnum;
 import com.xxl.job.admin.core.util.I18nUtil;
 import com.xxl.job.admin.dao.XxlJobGroupDao;
+import com.xxl.job.admin.dto.XxlJobInfoDTO;
+import com.xxl.job.admin.dto.XxlJobInfoSyncDTO;
 import com.xxl.job.admin.service.LoginService;
 import com.xxl.job.admin.service.XxlJobService;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -21,8 +24,10 @@ import com.xxl.job.core.glue.GlueTypeEnum;
 import com.xxl.job.core.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -64,6 +69,12 @@ public class JobInfoController {
 		if (jobGroupList==null || jobGroupList.size()==0) {
 			throw new XxlJobException(I18nUtil.getString("jobgroup_empty"));
 		}
+
+		//为了展示全部执行器对应的任务列表，增加默认执行器
+		XxlJobGroup defaultXxlJobGroup = new XxlJobGroup();
+		defaultXxlJobGroup.setId(0);
+		defaultXxlJobGroup.setTitle("请选择");
+		jobGroupList.add(0,defaultXxlJobGroup);
 
 		model.addAttribute("JobGroupList", jobGroupList);
 		model.addAttribute("jobGroup", jobGroup);
@@ -123,6 +134,13 @@ public class JobInfoController {
 	@ResponseBody
 	public ReturnT<String> remove(int id) {
 		return xxlJobService.remove(id);
+	}
+
+	@RequestMapping("/sync")
+	@ResponseBody
+	@PermissionLimit(limit=false)
+	public ReturnT<Integer> sync(@RequestBody XxlJobInfoSyncDTO xxlJobInfoSyncDTO) {
+		return xxlJobService.sync(xxlJobInfoSyncDTO);
 	}
 	
 	@RequestMapping("/stop")

@@ -1,4 +1,4 @@
-package com.xxl.job.admin.core.model;
+package com.xxl.job.admin.dto;
 
 import java.util.Date;
 
@@ -7,16 +7,16 @@ import java.util.Date;
  *
  * @author xuxueli  2016-1-12 18:25:49
  */
-public class XxlJobInfo {
-	
+public class XxlJobInfoDTO {
+
 	private int id;				// 主键ID
-	
+
 	private int jobGroup;		// 执行器主键ID
 	private String jobDesc;
-	
+
 	private Date addTime;
 	private Date updateTime;
-	
+
 	private String author;		// 负责人
 	private String alarmEmail;	// 报警邮件
 
@@ -30,7 +30,7 @@ public class XxlJobInfo {
 	private String executorBlockStrategy;	// 阻塞处理策略
 	private int executorTimeout;     		// 任务执行超时时间，单位秒
 	private int executorFailRetryCount;		// 失败重试次数
-	
+
 	private String glueType;		// GLUE类型	#com.xxl.job.core.glue.GlueTypeEnum
 	private String glueSource;		// GLUE源代码
 	private String glueRemark;		// GLUE备注
@@ -43,7 +43,12 @@ public class XxlJobInfo {
 	private long triggerNextTime;	// 下次调度时间
 
 	private int sourceId;			// 来源环境的任务id
+	private String jobGroupAppName;
+	private String jobGroupTitle;
+	private int jobGroupAddressType;        // 执行器地址类型：0=自动注册、1=手动录入
 
+	public XxlJobInfoDTO() {
+	}
 
 	public int getId() {
 		return id;
@@ -243,5 +248,29 @@ public class XxlJobInfo {
 
 	public void setSourceId(int sourceId) {
 		this.sourceId = sourceId;
+	}
+
+	public String getJobGroupAppName() {
+		return jobGroupAppName;
+	}
+
+	public void setJobGroupAppName(String jobGroupAppName) {
+		this.jobGroupAppName = jobGroupAppName;
+	}
+
+	public String getJobGroupTitle() {
+		return jobGroupTitle;
+	}
+
+	public void setJobGroupTitle(String jobGroupTitle) {
+		this.jobGroupTitle = jobGroupTitle;
+	}
+
+	public int getJobGroupAddressType() {
+		return jobGroupAddressType;
+	}
+
+	public void setJobGroupAddressType(int jobGroupAddressType) {
+		this.jobGroupAddressType = jobGroupAddressType;
 	}
 }

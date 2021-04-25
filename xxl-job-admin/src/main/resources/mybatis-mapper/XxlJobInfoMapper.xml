@@ -36,6 +36,47 @@
 		<result column="trigger_status" property="triggerStatus" />
 		<result column="trigger_last_time" property="triggerLastTime" />
 		<result column="trigger_next_time" property="triggerNextTime" />
+		<result column="source_id" property="sourceId" />
+	</resultMap>
+
+	<resultMap id="XxlJobInfoDTO" type="com.xxl.job.admin.dto.XxlJobInfoDTO" >
+		<result column="id" property="id" />
+
+		<result column="job_group" property="jobGroup" />
+		<result column="job_desc" property="jobDesc" />
+
+		<result column="add_time" property="addTime" />
+		<result column="update_time" property="updateTime" />
+
+		<result column="author" property="author" />
+		<result column="alarm_email" property="alarmEmail" />
+
+		<result column="schedule_type" property="scheduleType" />
+		<result column="schedule_conf" property="scheduleConf" />
+		<result column="misfire_strategy" property="misfireStrategy" />
+
+		<result column="executor_route_strategy" property="executorRouteStrategy" />
+		<result column="executor_handler" property="executorHandler" />
+		<result column="executor_param" property="executorParam" />
+		<result column="executor_block_strategy" property="executorBlockStrategy" />
+		<result column="executor_timeout" property="executorTimeout" />
+		<result column="executor_fail_retry_count" property="executorFailRetryCount" />
+
+		<result column="glue_type" property="glueType" />
+		<result column="glue_source" property="glueSource" />
+		<result column="glue_remark" property="glueRemark" />
+		<result column="glue_updatetime" property="glueUpdatetime" />
+
+		<result column="child_jobid" property="childJobId" />
+
+		<result column="trigger_status" property="triggerStatus" />
+		<result column="trigger_last_time" property="triggerLastTime" />
+		<result column="trigger_next_time" property="triggerNextTime" />
+
+		<result column="source_id" property="sourceId" />
+		<result column="app_name" property="jobGroupAppName" />
+		<result column="title" property="jobGroupTitle" />
+		<result column="address_type" property="jobGroupAddressType" />
 	</resultMap>
 
 	<sql id="Base_Column_List">
@@ -62,7 +103,8 @@
 		t.child_jobid,
 		t.trigger_status,
 		t.trigger_last_time,
-		t.trigger_next_time
+		t.trigger_next_time,
+		t.source_id
 	</sql>
 
 	<select id="pageList" parameterType="java.util.HashMap" resultMap="XxlJobInfo">
@@ -237,4 +279,98 @@
 		WHERE id = #{id}
 	</update>
 
+	<select id="pageListWithGroup" parameterType="java.util.HashMap" resultMap="XxlJobInfoDTO">
+		SELECT <include refid="Base_Column_List" />,
+		       t.source_id, g.app_name, g.title, g.address_type
+		FROM xxl_job_info AS t
+		LEFT JOIN xxl_job_group AS g ON t.job_group = g.id
+		<trim prefix="WHERE" prefixOverrides="AND | OR" >
+			<if test="jobGroup gt 0">
+				AND t.job_group = #{jobGroup}
+			</if>
+			<if test="triggerStatus gte 0">
+				AND t.trigger_status = #{triggerStatus}
+			</if>
+			<if test="jobDesc != null and jobDesc != ''">
+				AND t.job_desc like CONCAT(CONCAT('%', #{jobDesc}), '%')
+			</if>
+			<if test="executorHandler != null and executorHandler != ''">
+				AND t.executor_handler like CONCAT(CONCAT('%', #{executorHandler}), '%')
+			</if>
+			<if test="author != null and author != ''">
+				AND t.author like CONCAT(CONCAT('%', #{author}), '%')
+			</if>
+		</trim>
+		ORDER BY id DESC
+		LIMIT #{offset}, #{pagesize}
+	</select>
+
+	<select id="listBySourceIdAndHandler" resultMap="XxlJobInfo">
+		SELECT <include refid="Base_Column_List" />
+		FROM xxl_job_info AS t
+		WHERE
+		<foreach collection="list" item="item" open="(" close=")" separator=" or ">
+			(
+				t.source_id = #{item.id}
+				and t.executor_handler = #{item.executorHandler}
+			)
+		</foreach>
+	</select>
+
+	<insert id="batchSave" parameterType="java.util.List">
+		INSERT INTO xxl_job_info (
+			job_group,
+			job_desc,
+			add_time,
+			update_time,
+			author,
+			alarm_email,
+			schedule_type,
+			schedule_conf,
+			misfire_strategy,
+			executor_route_strategy,
+			executor_handler,
+			executor_param,
+			executor_block_strategy,
+			executor_timeout,
+			executor_fail_retry_count,
+			glue_type,
+			glue_source,
+			glue_remark,
+			glue_updatetime,
+			child_jobid,
+			trigger_status,
+			trigger_last_time,
+			trigger_next_time,
+			source_id
+		) VALUES
+		<foreach collection="list" item="item" separator=" , ">
+			(
+				#{item.jobGroup},
+				#{item.jobDesc},
+				#{item.addTime},
+				#{item.updateTime},
+				#{item.author},
+				#{item.alarmEmail},
+				#{item.scheduleType},
+				#{item.scheduleConf},
+				#{item.misfireStrategy},
+				#{item.executorRouteStrategy},
+				#{item.executorHandler},
+				#{item.executorParam},
+				#{item.executorBlockStrategy},
+				#{item.executorTimeout},
+				#{item.executorFailRetryCount},
+				#{item.glueType},
+				#{item.glueSource},
+				#{item.glueRemark},
+				#{item.glueUpdatetime},
+				#{item.childJobId},
+				#{item.triggerStatus},
+				#{item.triggerLastTime},
+				#{item.triggerNextTime},
+				#{item.sourceId}
+			)
+		</foreach>
+	</insert>
 </mapper>

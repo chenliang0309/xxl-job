@@ -25,6 +25,15 @@ $(function() {
 	    //"scrollX": true,	// scroll x，close self-adaption
 	    "columns": [
 	                {
+						"bSortable": false,
+						"visible" : true,
+						"render": function ( data, type, row ) {
+							$("input[name='infoCheckAll']").prop("checked", false);
+							return "<div align='center'><input type=\"checkbox\" name=\"infoCheckBox\" class=\"info_check_box\" value=" + row.id + "></div>";
+						},
+						"width":'5%'
+					},
+					{
 	                	"data": 'id',
 						"bSortable": false,
 						"visible" : true,
@@ -46,7 +55,7 @@ $(function() {
 	                {
 	                	"data": 'jobDesc',
 						"visible" : true,
-						"width":'25%'
+						"width":'20%'
 					},
 					{
 						"data": 'scheduleType',
@@ -197,6 +206,147 @@ $(function() {
 	$('#searchBtn').on('click', function(){
 		jobTable.fnDraw();
 	});
+
+	// export btn
+	$('#exportBtn').on('click', function(){
+		//要导出的json数据
+		var jsonData = [];
+		$("input[name='infoCheckBox']").each(function () {
+			if (this.checked == true) {
+				jsonData[jsonData.length] = tableData['key'+this.value];
+			}
+		});
+		if(jsonData.length == 0){
+			layer.confirm( I18n.system_please_choose + I18n.system_export + I18n.jobinfo_job , {
+				icon: 3,
+				title: I18n.system_tips ,
+				btn: [ I18n.system_ok ]
+			});
+			return;
+		}
+		//导出前要将json转成table格式
+		exportCSV(jsonData);
+	});
+
+	Date.prototype.Format = function (fmt) {
+		var o = {
+			"M+": this.getMonth() + 1, // 月份
+			"d+": this.getDate(), // 日
+			"h+": this.getHours(), // 小时
+			"m+": this.getMinutes(), // 分
+			"s+": this.getSeconds(), // 秒
+			"q+": Math.floor((this.getMonth() + 3) / 3), // 季度
+			"S": this.getMilliseconds() // 毫秒
+		};
+		if (/(y+)/.test(fmt))
+			fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+		for (var k in o)
+			if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+		return fmt;
+	}
+
+	String.prototype.trim = function () { return this.replace(/(^\s*)|(\s*$)/g, ""); }
+
+	function exportCSV(jsonData){
+		//列标题
+		var str = 'id,jobGroup,jobDesc,addTime,updateTime,' +
+			'author,alarmEmail,scheduleType,scheduleConf,misfireStrategy,' +
+			'executorRouteStrategy,executorHandler,executorParam,executorBlockStrategy,executorTimeout,' +
+			'executorFailRetryCount,glueType,glueSource,glueRemark,glueUpdatetime,' +
+			'childJobId,triggerStatus,triggerLastTime,triggerNextTime,sourceId,' +
+			'jobGroupAppName,jobGroupTitle,jobGroupAddressType\n';
+		//具体数值 遍历
+		for(let i = 0 ; i < jsonData.length ; i++ ){
+			for(let item in jsonData[i]){
+				//增加\t为了不让表格显示科学计数法或者其他格式
+				//此处用`取代'，具体用法搜索模板字符串 ES6特性
+				str+=`${jsonData[i][item] + '\t,'}`;
+			}
+			str+='\n';
+		}
+		let uri = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(str);
+		var link = document.createElement("a");
+		link.href = uri;
+		link.download = "task_" + new Date().Format("yyyy-MM-dd hh:mm:ss") + ".csv";
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	};
+
+	// export btn
+	$('#importBtn').on('click', function(){
+		$("#infoCSVInput").csv2arr();
+	});
+
+	$.fn.csv2arr = function(){
+		var files = $(this)[0].files;
+		var jobInfoDTOs = [];
+		if(files.length == 0){
+			layer.confirm( I18n.system_please_choose + I18n.system_import + I18n.jobinfo_job + I18n.system_file, {
+				icon: 3,
+				title: I18n.system_tips ,
+				btn: [ I18n.system_ok ]
+			});
+			return;
+		}
+		if( typeof(FileReader) !== 'undefined' ){    //H5
+			var reader = new FileReader();
+			reader.readAsText( files[0] );            //以文本格式读取
+			reader.onload = function(evt){
+				var data = evt.target.result;        //读到的数据
+				var rows = data.split('\n');
+				if(rows.length > 1){
+					var keys = rows[0].split(',') ;
+					for(let i = 1; i < rows.length-1; i++){
+						var entryData = {};
+						var row = rows[i].split(',') ;
+						for(let j = 0; j < keys.length; j++){
+							var key = keys[j].trim();
+							var value = row[j].trim();
+							if(value.charAt(0) == '\"' && value.charAt(value.length-1) == '\"'){
+								value = value.substring(1,value.length-1);
+								value = value.trim();
+							}
+							entryData[key]=value;
+						}
+						jobInfoDTOs[jobInfoDTOs.length] = entryData;
+					}
+				}
+				//上传任务到后台
+				if (jobInfoDTOs.length > 0){
+					let data = {};
+					data.xxlJobInfoDTOs = jobInfoDTOs;
+					data.fileName = files[0].name;
+					if(data.fileName.lastIndexOf('.')>0){
+						data.fileName = data.fileName.substring(0,data.fileName.lastIndexOf('.'));
+					}
+					if(data.fileName.indexOf('_')>0){
+						data.fileName = data.fileName.substring(data.fileName.indexOf('_'),data.fileName.length);
+					}
+					if(data.fileName.length > 20){
+						data.fileName = data.fileName.substring(data.fileName.length-20);
+					}
+					$.ajax({
+						url : base_url + "/jobinfo/sync",
+						data : JSON.stringify(data),
+						type : 'POST',
+						contentType : "application/json",
+						dataType : "json",
+						success : function(data){
+							if (data.code == 200) {
+								layer.msg( I18n.system_success + I18n.system_import + data.content + I18n.jobinfo_job_unit + I18n.jobinfo_job);
+								jobTable.fnDraw(false);
+							} else {
+								layer.msg( data.msg || I18n.system_import + I18n.system_fail );
+							}
+						}
+					});
+				}
+			}
+		}else{
+			alert("IE9及以下浏览器不支持，请使用Chrome或Firefox浏览器");
+		}
+	}
 
 	// jobGroup change
 	$('#jobGroup').on('change', function(){
@@ -736,4 +886,50 @@ $(function() {
 		$('#addModal').modal({backdrop: false, keyboard: false}).modal('show');
 	});
 
+	$("#job_list").on('click', '.info_check_box', function () {
+		if ($(this).is(":checked") == false) {
+			$("input[name='infoCheckAll']").prop("checked", false);
+		} else {
+			var flag = true;
+			$("input[name='infoCheckAll']").prop("checked", true);
+			$("input[name='infoCheckBox']").each(function () {
+				if (this.checked == false) {
+					$("input[name='infoCheckAll']").prop("checked", false);
+					flag = false;
+					return;
+				}
+			});
+		}
+	});
+	
+	$("input[name='infoCheckAll']").on('click', function () {
+		if (this.checked) {
+			$(this).attr('checked', 'checked')
+			$("input[name='infoCheckBox']").each(function () {
+				this.checked = true;
+			});
+
+
+		} else {
+			$(this).removeAttr('checked')
+			$("input[name='infoCheckBox']").each(function () {
+				this.checked = false;
+
+			});
+		}
+	});
+
+	$("#infoCSVInputText").on('click', function () {
+		$("#infoCSVInput").click();
+	});
+
+	$("#infoCSVInput").on('change', function () {
+		if($("#infoCSVInput")[0].files.length > 0){
+			let fileName = $("#infoCSVInput")[0].files[0].name;
+			if(fileName.length > 36){
+				fileName = fileName.substring(0,5) + '...' + fileName.substring(fileName.length-26);
+			}
+			$("#infoCSVInputText").val(fileName);
+		}
+	});
 });
